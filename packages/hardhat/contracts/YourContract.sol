@@ -1,31 +1,35 @@
-pragma solidity >=0.8.0 <0.9.0;
-//SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
 
-import "hardhat/console.sol";
-//import "@openzeppelin/contracts/access/Ownable.sol"; //https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
 
-contract YourContract {
+contract YourContract is ERC721URIStorage {
+    using Counters for Counters.Counter;
+    Counters.Counter private _tokenIds;
+    address public _contract_owner;
 
-  event SetPurpose(address sender, string purpose);
+    constructor() ERC721("Artifacts", "FACTS") {
+        // TODO change this to msg.sender
+        _contract_owner = 0xe66c9fFe7BC3a00fD3C967f49c823246ca14e908;
+    }
 
-  string public purpose = "Building Unstoppable Apps";
+    modifier onlyOwner() {
+        require(msg.sender == _contract_owner);
+        _;
+    }
 
-  error EmptyPurposeError(uint code, string message);
+    function awardItem(address player, string memory tokenURI)
+        public
+        onlyOwner
+        returns (uint256)
+    {
+        _tokenIds.increment();
 
-  constructor() {
-    // what should we do on deploy?
-  }
+        uint256 newItemId = _tokenIds.current();
+        _mint(player, newItemId);
+        _setTokenURI(newItemId, tokenURI);
 
-  function setPurpose(string memory newPurpose) public {
-      if(bytes(newPurpose).length == 0){
-          revert EmptyPurposeError({
-              code: 1,
-              message: "Purpose can not be empty"
-          });
-      }
-
-      purpose = newPurpose;
-      console.log(msg.sender,"set purpose to",purpose);
-      emit SetPurpose(msg.sender, purpose);
-  }
+        return newItemId;
+    }
 }
